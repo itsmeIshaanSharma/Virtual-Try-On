@@ -29,21 +29,23 @@ def get_params(opt, size):
     x = random.randint(0, np.maximum(0, new_w - opt.fineSize))
     y = random.randint(0, np.maximum(0, new_h - opt.fineSize))
 
-    #flip = random.random() > 0.5
-    flip = 0
+    flip = 0  # fixed (disable flip randomness)
     return {'crop_pos': (x, y), 'flip': flip}
 
 
 def get_transform(opt, params, method=Image.BICUBIC, normalize=True):
     transform_list = []
+
     if 'resize' in opt.resize_or_crop:
         osize = [opt.loadSize, opt.loadSize]
-        transform_list.append(transforms.Scale(osize, method))
+        transform_list.append(transforms.Resize(osize, method))  # ✅ updated
+
     elif 'scale_width' in opt.resize_or_crop:
         transform_list.append(transforms.Lambda(
             lambda img: __scale_width(img, opt.loadSize, method)))
         osize = [256, 192]
-        transform_list.append(transforms.Scale(osize, method))
+        transform_list.append(transforms.Resize(osize, method))  # ✅ updated
+
     if 'crop' in opt.resize_or_crop:
         transform_list.append(transforms.Lambda(
             lambda img: __crop(img, params['crop_pos'], opt.fineSize)))
@@ -82,7 +84,7 @@ def __make_power_2(img, base, method=Image.BICUBIC):
 
 def __scale_width(img, target_width, method=Image.BICUBIC):
     ow, oh = img.size
-    if (ow == target_width):
+    if ow == target_width:
         return img
     w = target_width
     h = int(target_width * oh / ow)
